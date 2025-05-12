@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <h1>Let's Read</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('profile') }}">Profile</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} fade-out">
+                            {{ message }}
+                            <button class="close-button" onclick="this.parentElement.style.display='none'">×</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div id="success-message" class="success-message" style="display: none;">
+                Book has been added successfully!
+            </div>
+
+            <!-- Search Section -->
+            <div class="search-section">  
+                <h1 class="welcome-text">Welcome Back!</h1>
+                <div class="search-container">
+                    <div class="search-bar">
+                        <input type="text" id="search-query" placeholder="Search for books...">
+                    </div>
+                    <div id="search-results"></div>
+                </div>
+            </div>
+
+            <!-- Recommendations Section -->
+            {% if recommendations %}
+            <section class="recommendations-section">
+                <h2>Recommended for You</h2>
+                <div class="recommendations-container">
+                    {% for book in recommendations %}
+                    <div class="book-card horizontal">
+                        <div class="book-thumbnail">
+                            <img src="{{ book.thumbnail }}" alt="{{ book.title }} cover">
+                        </div>
+                        <div class="book-info">
+                            <h3>{{ book.title }}</h3>
+                            <div class="book-details">
+                                <p>Author: {{ book.author }}</p>
+                                <p>Category: {{ book.genre }}</p>
+                                <p>Rating: {{ book.average_rating }}</p>
+                            </div>
+                            <div class="book-description">{{ book.description }}</div>
+                            <button class="mark-completed {% if book.completed %}completed{% endif %}" 
+                                    onclick="markAsRead('{{ book.id }}', this)"
+                                    {% if book.completed %}disabled{% endif %}>
+                                {% if book.completed %}Completed{% else %}Mark as Completed{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+        </main>
+    </div>
+
+    <div class="dashboard-section">
+        <div id="message-container"></div>
+    </div>
+
+    <script>
+        // Function to handle search
+        async function searchBooks() {
+            const query = document.getElementById('search-query').value;
+            if (!query.trim()) {
+                return;
+            }
+
+            const searchResults = document.getElementById('search-results');
+            searchResults.innerHTML = '<p class="searching">Searching...</p>';
+
+            try {
+                const response = await fetch(`/search_books?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                searchResults.innerHTML = '';
+
+                if (data.error) {
+                    searchResults.innerHTML = `<p class="error">${data.error}</p>`;
+                    return;
+                }
+
+                if (data.length === 0) {
+                    searchResults.innerHTML = `
+                        <p class="no-results">No books found.</p>
+                        <button class="mark-completed" onclick="window.location.href='/add_book'">
+                            Add New Book
+                        </button>`;
+                    return;
+                }
+
+                data.forEach(book => {
+                    const descriptionText = book.description || 'No description available';
+                    const bookCard = `
+                        <div class="book-card">
+                            <div class="book-thumbnail">
+                                <img src="${book.thumbnail}" alt="${book.title} cover">
+                            </div>
+                            <div class="book-info">
+                                <h3>${book.title}</h3>
+                                <div class="book-details">
+                                    <p>Author: ${book.author}</p>
+                                    <p>Category: ${book.category}</p>
+                                    <p>Rating: ${book.average_rating}</p>
+                                </div>
+                                <div class="book-description">${descriptionText}</div>
+                                <button class="mark-completed ${book.completed ? 'completed' : ''}" 
+                                        onclick="markAsRead('${book.id}', this)"
+                                        ${book.completed ? 'disabled' : ''}>
+                                    ${book.completed ? 'Completed' : 'Mark as Completed'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    searchResults.insertAdjacentHTML('beforeend', bookCard);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                searchResults.innerHTML = '<p class="error">An error occurred while searching. Please try again.</p>';
+            }
+        }
+
+        // Function to mark book as read/completed
+        async function markAsRead(bookId, button) {
+            // Immediately update button appearance
+            button.textContent = 'Completed';
+            button.classList.add('completed');
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/mark_as_read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ book_id: bookId })
+                });
+                
+                if (!response.ok) {
+                    // If error, revert button
+                    button.textContent = 'Mark as Completed';
+                    button.classList.remove('completed');
+                    button.disabled = false;
+                    throw new Error('Failed to mark book as read');
+                }
+
+                // If we're in search results, don't reload the page
+                if (!document.getElementById('search-query').value) {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                // Revert button on error
+                button.textContent = 'Mark as Completed';
+                button.classList.remove('completed');
+                button.disabled = false;
+            }
+        }
+
+        // Event listener for search input
+        document.getElementById('search-query').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchBooks();
+            }
+        });
+    </script>
+</body>
+</html>

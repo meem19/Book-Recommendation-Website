@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.username }}'s Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <h1>Let's Read</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('edit_profile') }}">Edit Profile</a></li>
+            <li><a href="{{ url_for('logout') }}">Sign out</a></li>
+        </ul>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div id="success-message" class="success-message" style="display: none;"></div>
+
+    <main class="profile-section">
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        {% if user.gender == 'female' %}
+                            <img src="{{ url_for('static', filename='images/female.png') }}" alt="Female Avatar">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/male.png') }}" alt="Male Avatar">
+                        {% endif %}
+                    </div>
+                    <div class="user-details">
+                        <h2>{{ user.username }}</h2>
+                        <p class="user-email">{{ user.email }}</p>
+                        {% if reading_preferences %}
+                        <div class="preferences-section">
+                            <h3>Reading Preferences:</h3>
+                            <div class="preferences-container">
+                                {% for preference in reading_preferences %}
+                                    <button class="category-btn {{ preference.lower() }}" disabled>
+                                        {{ preference }}
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="completed-books">
+                    <h3>Completed Books</h3>
+                    <div class="book-grid">
+                        {% if completed_books %}
+                        {% for book in completed_books %}
+                        <div class="book-card" id="book-{{ loop.index }}">
+                            <div class="book-image">
+                                <img src="{{ book.thumbnail_url or url_for('static', filename='images/book-placeholder.png') }}" 
+                                     alt="{{ book.title }}" 
+                                     class="book-thumbnail">
+                            </div>
+                            <div class="book-details">
+                                <h3 class="book-title">{{ book.title }}</h3>
+                                <p class="book-authors">By {{ book.authors }}</p>
+                                {% if book.published_date %}
+                                <p class="book-date">Published: {{ book.published_date[:4] }}</p>
+                                {% endif %}
+                                {% if book.categories %}
+                                <div class="book-categories">
+                                    {% for category in book.categories.split(',')[:2] %}
+                                    <span class="category-tag">{{ category.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="book-description">{{ book.description }}</div>
+                                <button class="mark-completed completed" 
+                                        onclick="removeFromCompleted('{{ book.title }}', this)">
+                                    Remove
+                                </button>
+                                {% if book.rating %}
+                                <div class="book-rating">
+                                    <span class="stars">
+                                        {% for i in range(book.rating|int) %}★{% endfor %}
+                                        {% for i in range(5 - book.rating|int) %}☆{% endfor %}
+                                    </span>
+                                    <span class="rating-value">{{ book.rating }}/5</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <p class="no-books">No completed books yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function removeFromCompleted(bookTitle, element) {
+            const button = element;
+            
+            // Prevent double-clicking
+            if (button.disabled) {
+                return;
+            }
+            
+            // Temporarily disable the button
+            button.disabled = true;
+            button.textContent = 'Removing...';
+            
+            fetch('/remove_completed_book', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ bookId: bookTitle })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Remove the book element with animation
+                const bookElement = button.parentNode.parentNode;
+                bookElement.style.opacity = '0';
+                setTimeout(() => {
+                    bookElement.remove();
+                    
+                    // Check if there are no more books
+                    const booksList = document.querySelector('.book-grid');
+                    if (!booksList || booksList.children.length === 0) {
+                        document.querySelector('.book-grid').innerHTML = 
+                            '<p class="no-books">No completed books yet.</p>';
+                    }
+                }, 300);
+                
+                // Show success message
+                const successMessage = document.getElementById('success-message');
+                successMessage.textContent = 'Book removed from completed list';
+                successMessage.style.display = 'block';
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                button.disabled = false;
+                button.textContent = 'Remove';
+                alert('Failed to remove book. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>

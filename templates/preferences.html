@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preferences</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"></head>
+</head>
+<body>
+    <!-- Navigation Bar with Heading -->
+    <nav class="navbar">
+        <div class="logo">
+            <h1>Let's Read</h1>
+        </div>
+    </nav>
+
+    <!-- Preferences Page Content -->
+    <div class="preferences-container">
+        <h2>Choose Your Favorite Genres</h2>
+
+        <!-- Category Buttons Section -->
+        <div class="category-buttons">
+            <button class="category-btn" data-category="fiction">Fiction</button>
+            <button class="category-btn" data-category="non-fiction">Non-Fiction</button>
+            <button class="category-btn" data-category="mystery">Mystery</button>
+            <button class="category-btn" data-category="romance">Romance</button>
+            <button class="category-btn" data-category="religion">Religion</button>
+            <button class="category-btn" data-category="arthurian-romances">Arthurian Romances</button>
+            <button class="category-btn" data-category="country-life">Country Life</button>
+            <button class="category-btn" data-category="human-cloning">Human Cloning</button>
+            <button class="category-btn" data-category="biography">Biography</button>
+            <button class="category-btn" data-category="health-fitness">Health & Fitness</button>
+            <button class="category-btn" data-category="art">Art</button>
+            <button class="category-btn" data-category="drama">Drama</button>
+            <button class="category-btn" data-category="history">History</button>
+            <button class="category-btn" data-category="comedy">Comedy</button>
+            <button class="category-btn" data-category="computers">Computers</button>
+            <button class="category-btn" data-category="social-science">Social Science</button>
+            <button class="category-btn" data-category="self-help">Self-Help</button>
+            <button class="category-btn" data-category="physicists">Physicists</button>
+            <button class="category-btn" data-category="medical">Medical</button>
+            <button class="category-btn" data-category="psychology">Psychology</button>
+            <button class="category-btn" data-category="philosophy">Philosophy</button>
+            <button class="category-btn" data-category="business-economics">Business & Economics</button>
+        </div>
+
+
+
+        <!-- Submit Button -->
+        <div class="submit-container">
+            <button class="submit-btn" id="submit-btn">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize category buttons
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                button.classList.toggle('selected');
+            });
+        });
+
+        document.getElementById('submit-btn').addEventListener('click', () => {
+            const selectedCategories = [];
+            categoryButtons.forEach(button => {
+                if (button.classList.contains('selected')) {
+                    selectedCategories.push(button.dataset.category);
+                }
+            });
+
+            // Send the selected categories to the backend using fetch
+            fetch('/save_preferences', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ categories: selectedCategories })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    console.log('Preferences saved successfully!');
+                    window.location.href = '/dashboard';
+                } else {
+                    console.error('Error saving preferences:', data.error);
+                    alert('Error saving preferences. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving preferences. Please try again.');
+            });
+        });
+    </script>
+</body>
+</html>

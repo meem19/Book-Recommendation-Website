@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Add Book</title>
+    <style>
+        .category-btn.selected {
+            background-color: #4CAF50; /* Green */
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash messages will be displayed here -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="flash-message {{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <nav class="navbar">
+        <div class="logo">
+            <h1>Let's Read</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('profile') }}">Profile</a></li>   
+            <li><a href="{{ url_for('dashboard') }}">Explore More</a></li>  
+        </ul>
+    </nav>
+
+    <h1>Add a New Book</h1>
+    <div class="add-book-section">
+        <form action="{{ url_for('add_book') }}" method="POST" class="add-book-form">
+            <label for="title">Book Title:</label>
+            <input type="text" id="title" name="Title" placeholder="Book Title" required>
+            
+            <label for="author">Author:</label>
+            <input type="text" id="author" name="Author" placeholder="Author" required>
+
+            <label for="year">Publish Year:</label>
+            <input type="number" id="year" name="Year" placeholder="Publish Year" required>
+
+            <label for="description">Description:</label>
+            <textarea id="description" name="Description" placeholder="Write your review here"></textarea>
+
+            <label for="rate">Book Rating out of 5:</label>
+            <div style="text-align: center;">
+                <div id="rateValue" style="font-size: 1.5em;">2.5</div>
+                <input type="range" id="rate" name="Rate" min="0" max="5" step="0.1" value="2.5">
+            </div>
+
+            <div class="book-category">
+                <h3>Choose book categories</h3>
+                <input type="hidden" id="categories" name="Categories" value="">
+                <div class="category-buttons">
+                    <button class="category-btn" data-category="fiction">Fiction</button>
+                    <button class="category-btn" data-category="non-fiction">Non-Fiction</button>
+                    <button class="category-btn" data-category="mystery">Mystery</button>
+                    <button class="category-btn" data-category="romance">Romance</button>
+                    <button class="category-btn" data-category="religion">Religion</button>
+                    <button class="category-btn" data-category="arthurian-romances">Arthurian Romances</button>
+                    <button class="category-btn" data-category="country-life">Country Life</button>
+                    <button class="category-btn" data-category="human-cloning">Human Cloning</button>
+                    <button class="category-btn" data-category="biography">Biography</button>
+                    <button class="category-btn" data-category="health-fitness">Health & Fitness</button>
+                    <button class="category-btn" data-category="art">Art</button>
+                    <button class="category-btn" data-category="drama">Drama</button>
+                    <button class="category-btn" data-category="history">History</button>
+                    <button class="category-btn" data-category="comedy">Comedy</button>
+                    <button class="category-btn" data-category="computers">Computers</button>
+                    <button class="category-btn" data-category="social-science">Social Science</button>
+                    <button class="category-btn" data-category="self-help">Self-Help</button>
+                    <button class="category-btn" data-category="physicists">Physicists</button>
+                    <button class="category-btn" data-category="medical">Medical</button>
+                    <button class="category-btn" data-category="psychology">Psychology</button>
+                    <button class="category-btn" data-category="philosophy">Philosophy</button>
+                    <button class="category-btn" data-category="business-economics">Business & Economics</button>
+                    <button class="category-btn" data-category="spy">Spy</button>
+                </div>
+            </div>
+            <div class="submit-container">
+                <button class="submit-btn" id="submit-btn">Add New Book</button>
+            </div>
+        </form>
+    </div>
+
+    {% if book_not_found %}
+        <!-- Display a link to the Dashboard page if the book is not found -->
+        <p>Book not found in the dataset. You can go back to the <a href="{{ url_for('dashboard') }}">Dashboard</a> to explore more books.</p>
+    {% endif %}
+
+    <!-- Inline JS for Interactivity -->
+    <script>
+        // Update rate value display
+        const rateInput = document.getElementById('rate');
+        const rateValue = document.getElementById('rateValue');
+        
+        rateInput.addEventListener('input', function() {
+            rateValue.textContent = this.value;
+        });
+
+        // Handle multiple category selection
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        const categoriesInput = document.getElementById('categories');
+        const selectedCategories = new Set();
+
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent form submission
+                const category = this.dataset.category;
+                
+                if (this.classList.contains('selected')) {
+                    // Deselect category
+                    this.classList.remove('selected');
+                    selectedCategories.delete(category);
+                } else {
+                    // Select category
+                    this.classList.add('selected');
+                    selectedCategories.add(category);
+                }
+                
+                // Update hidden input with comma-separated categories
+                categoriesInput.value = Array.from(selectedCategories).join(',');
+            });
+        });
+
+        // Form validation
+        document.querySelector('.add-book-form').addEventListener('submit', function(e) {
+            if (selectedCategories.size === 0) {
+                e.preventDefault();
+                alert('Please select at least one category for the book');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Let's Read</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo">
+      <h1>Let's Read</h1>
+    </div>
+    <ul class="nav-links"></ul>
+  </nav>
+
+  <!-- Login Section -->
+  <div class="login-container">
+    <div class="slideshow-container">
+      <div class="slideshow">
+        <img src="{{ url_for('static', filename='images/1.png') }}" class="slide active">
+        <img src="{{ url_for('static', filename='images/2.png') }}" class="slide">
+        <img src="{{ url_for('static', filename='images/7.png') }}" class="slide">
+        <img src="{{ url_for('static', filename='images/8.png') }}" class="slide">
+        <img src="{{ url_for('static', filename='images/9.png') }}" class="slide">
+        <img src="{{ url_for('static', filename='images/6.png') }}" class="slide">
+      </div>
+      <div class="slideshow-nav">
+        <div class="slide-dots">
+          <span class="dot active" onclick="currentSlide(1)"></span>
+          <span class="dot" onclick="currentSlide(2)"></span>
+          <span class="dot" onclick="currentSlide(3)"></span>
+          <span class="dot" onclick="currentSlide(4)"></span>
+          <span class="dot" onclick="currentSlide(5)"></span>
+          <span class="dot" onclick="currentSlide(6)"></span>
+        </div>
+      </div>
+   
+    </div>
+    
+    <div class="login-section">
+      <h2>Login</h2>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      
+      <form method="POST" action="{{ url_for('login') }}">
+        <div class="input-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Enter your username" required>
+        </div>
+        
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password"  placeholder="Enter your password" required>
+        </div>
+        
+        <button type="submit">Login</button>
+      </form>
+      
+      <div class="auth-links">
+        <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
+        <p><a href="{{ url_for('reset') }}">Forgot Password?</a></p>
+      </div>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <script>
+    let slideIndex = 0;
+    const slides = document.getElementsByClassName("slide");
+    let currentTimeout;
+    
+    function showNextSlide() {
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
+      }
+
+      // Remove classes from all slides
+      for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove('active', 'exit');
+      }
+      
+      // Move to next slide index
+      slideIndex++;
+      if (slideIndex >= slides.length) {
+        slideIndex = 0;
+      }
+
+      // If there was a previous slide, move it out
+      if (slideIndex > 0) {
+        slides[slideIndex - 1].classList.add('exit');
+      } else {
+        slides[slides.length - 1].classList.add('exit');
+      }
+
+      // Show new slide
+      slides[slideIndex].classList.add('active');
+      
+      // Update dots
+      const dots = document.getElementsByClassName("dot");
+      for (let i = 0; i < dots.length; i++) {
+        dots[i].classList.remove('active');
+      }
+      dots[slideIndex].classList.add('active');
+
+      // Wait 4 seconds before showing next slide
+      currentTimeout = setTimeout(showNextSlide, 4000);
+    }
+
+    function currentSlide(n) {
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
+      }
+
+      // Remove classes from all slides
+      for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove('active', 'exit');
+      }
+
+      // Show selected slide
+      slideIndex = n - 1;
+      slides[slideIndex].classList.add('active');
+      
+      // Update dots
+      const dots = document.getElementsByClassName("dot");
+      for (let i = 0; i < dots.length; i++) {
+        dots[i].classList.remove('active');
+      }
+      dots[slideIndex].classList.add('active');
+
+      // Resume slideshow after 4 seconds
+      currentTimeout = setTimeout(showNextSlide, 4000);
+    }
+
+    // Start the slideshow when the page loads
+    window.onload = function() {
+      // Show first slide
+      slides[0].classList.add('active');
+      const dots = document.getElementsByClassName("dot");
+      dots[0].classList.add('active');
+      // Start the slideshow
+      currentTimeout = setTimeout(showNextSlide, 4000);
+    };
+  </script>
+</body>
+</html>

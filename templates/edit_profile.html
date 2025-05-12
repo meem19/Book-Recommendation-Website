@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Let's Read</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .category-checkbox {
+            display: none;
+        }
+        .category-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .category-checkbox:checked + .category-btn {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        .category-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <h1>Let's Read</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('profile') }}">Back to Profile</a></li>
+            <li><a href="{{ url_for('logout') }}">Sign out</a></li>
+        </ul>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <main class="edit-profile-section">
+        <div class="profile-edit">
+            <h3>Update Your Profile</h3>
+            <form method="POST" action="{{ url_for('edit_profile') }}" id="profileForm">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" value="{{ user.username }}" placeholder="Enter username">
+                </div>
+                
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" value="{{ user.email }}" placeholder="Enter email">
+                </div>
+                
+                <div class="input-group">
+                    <label>Select Profile Picture</label>
+                    <div class="avatar-selection">
+                        <div class="avatar-option">
+                            <input type="radio" id="male" name="gender" value="male" {% if user.gender == 'male' %}checked{% endif %}>
+                            <label for="male">
+                                <img src="{{ url_for('static', filename='images/male.png') }}" alt="Male Avatar">
+                            </label>
+                        </div>
+                        <div class="avatar-option">
+                            <input type="radio" id="female" name="gender" value="female" {% if user.gender == 'female' %}checked{% endif %}>
+                            <label for="female">
+                                <img src="{{ url_for('static', filename='images/female.png') }}" alt="Female Avatar">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <h3>Reading Preferences</h3>
+                    <div class="category-buttons">
+                        {% for category in ['fiction', 'non-fiction', 'mystery', 'romance', 'religion', 'arthurian-romances', 'country-life', 'human-cloning', 'biography', 'health-fitness', 'art', 'drama', 'history', 'comedy', 'computers', 'social-science', 'self-help', 'physicists', 'medical', 'psychology', 'philosophy', 'business-economics'] %}
+                        <button type="button" class="category-btn" data-category="{{ category }}" {% if category in reading_preferences %}data-selected="true"{% endif %}>{{ category|replace('-', ' ')|title }}</button>
+                        {% endfor %}
+                    </div>
+                    <!-- Hidden inputs for selected preferences -->
+                    <div id="hiddenPreferences">
+                        {% for pref in reading_preferences %}
+                        <input type="hidden" name="preferences" value="{{ pref }}">
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="submit" class="btn">Save Changes</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const buttons = document.querySelectorAll('.category-btn');
+            const hiddenPreferences = document.getElementById('hiddenPreferences');
+            const form = document.getElementById('profileForm');
+
+            // Initialize buttons based on saved preferences
+            buttons.forEach(btn => {
+                if (btn.dataset.selected === "true") {
+                    btn.classList.add('selected');
+                }
+
+                btn.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                    const category = this.dataset.category;
+                    
+                    // Find existing hidden input for this category
+                    const existingInput = hiddenPreferences.querySelector(`input[value="${category}"]`);
+                    
+                    if (this.classList.contains('selected')) {
+                        if (!existingInput) {
+                            // Add hidden input if category is selected
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'preferences';
+                            input.value = category;
+                            hiddenPreferences.appendChild(input);
+                        }
+                    } else {
+                        // Remove hidden input if category is deselected
+                        if (existingInput) {
+                            existingInput.remove();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
