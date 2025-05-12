@@ -30,7 +30,7 @@
         </div>
         <ul class="nav-links">
             <li><a href="{{ url_for('profile') }}">Profile</a></li>   
-            <li><a href="{{ url_for('dashboard') }}">Explore More</a></li>  
+            <li><a href="{{ url_for('index') }}">Explore More</a></li>  
         </ul>
     </nav>
 
@@ -91,8 +91,8 @@
     </div>
 
     {% if book_not_found %}
-        <!-- Display a link to the Dashboard page if the book is not found -->
-        <p>Book not found in the dataset. You can go back to the <a href="{{ url_for('dashboard') }}">Dashboard</a> to explore more books.</p>
+        <!-- Display a link to the index page if the book is not found -->
+        <p>Book not found in the dataset. You can go back to the <a href="{{ url_for('index') }}">Dashboard</a> to explore more books.</p>
     {% endif %}
 
     <!-- Inline JS for Interactivity -->

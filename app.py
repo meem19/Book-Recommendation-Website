@@ -124,13 +124,13 @@ def get_recommendations(user_id, num_recommendations=6):
 @app.route('/')
 def index():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
         
     if request.method == 'POST':
         username = request.form.get('username')
@@ -140,15 +140,15 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
             flash('Logged in successfully!', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
         else:
             flash('Invalid username or password', 'error')
     
     return render_template('login.html')
 
-@app.route('/dashboard')
+@app.route('/index')
 @login_required
-def dashboard():
+def index():
     try:
         # Get personalized recommendations
         recommendations = get_recommendations(current_user.id)
@@ -168,15 +168,15 @@ def dashboard():
                 'id': book['title']  # Use title as ID since that's what we need for marking as read
             })
         
-        return render_template('Dashboard.html', 
+        return render_template('index.html', 
                              user=current_user,
                              recommendations=mapped_recommendations)
     except Exception as e:
-        print(f"Error in dashboard: {e}")
+        print(f"Error in index: {e}")
         import traceback
         traceback.print_exc()
         flash('An error occurred while loading recommendations.', 'error')
-        return render_template('Dashboard.html', user=current_user)
+        return render_template('index.html', user=current_user)
 
 @app.route('/search_books')
 @login_required
@@ -320,7 +320,7 @@ def add_book():
             db.session.commit()
             
             flash('Book added successfully!', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('index'))
             
         except Exception as e:
             if 'read_book' in locals():
@@ -383,7 +383,7 @@ def profile():
         import traceback
         traceback.print_exc()
         flash('An error occurred while loading your profile.', 'error')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('index'))
 
 @app.route('/preferences', methods=['GET'])
 @login_required
